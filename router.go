@@ -22,7 +22,7 @@ var validate *validator.Validate = validator.New()
 
 var headers = map[string]string{
 	"Access-Control-Allow-Origin":  OriginURL,
-	"Access-Control-Allow-Headers": "Content-Type, X-CF-Token",
+	"Access-Control-Allow-Headers": "Content-Type, X-CF-Token, X-Admin-Key",
 }
 
 func router(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -41,6 +41,7 @@ func router(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIG
 		providedCfToken := req.Headers["X-CF-Token"]
 
 		if providedCfToken != awsCfToken {
+			log.Println("router() error: CfToken mismatch")
 			return clientError(http.StatusUnauthorized)
 		}
 	}
@@ -48,19 +49,14 @@ func router(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIG
 	switch req.HTTPMethod {
 	case "GET":
 		return processGet(ctx, req)
-
 	case "OPTIONS":
 		return processOptions()
-
 	case "POST":
 		return handleAdminOnly(ctx, req, processPost)
-
 	case "DELETE":
 		return handleAdminOnly(ctx, req, processDelete)
-
 	case "PUT":
 		return handleAdminOnly(ctx, req, processPut)
-
 	default:
 		log.Println("router() error parsing HTTP method")
 		return clientError(http.StatusMethodNotAllowed)

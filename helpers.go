@@ -61,9 +61,8 @@ func mergeHeaders(baseHeaders, additionalHeaders map[string]string) map[string]s
 func isValidAdminKey(providedAdminKey string) bool {
 	adminKey := os.Getenv("ADMIN_KEY")
 
-	log.Println("*** got adminKey: " + adminKey)
-
 	if adminKey == "" {
+		log.Println("isValidAdminKey() got blank adminKey")
 		return false
 	}
 
@@ -76,6 +75,7 @@ func handleAdminOnly(
 	handler func(context.Context, events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error),
 ) (events.APIGatewayProxyResponse, error) {
 	if !isValidAdminKey(req.Headers["X-Admin-Key"]) {
+		log.Println("handleAdminOnly() error: AdminKey mismatch")
 		return clientError(http.StatusUnauthorized)
 	}
 	return handler(ctx, req)
