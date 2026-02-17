@@ -11,7 +11,9 @@ init: build
 
 .PHONY: deploy
 deploy: build
-	sam deploy --parameter-overrides AWS_CF_TOKEN="$(AWS_CF_TOKEN)" ADMIN_KEY="$(ADMIN_KEY)"
+	sam deploy --parameter-overrides \
+	AWS_CF_TOKEN="$$AWS_CF_TOKEN" \
+	ADMIN_KEY="$$ADMIN_KEY"
 
 .PHONY: delete
 delete:
