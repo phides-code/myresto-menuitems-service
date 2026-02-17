@@ -28,29 +28,39 @@ var headers = map[string]string{
 func router(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("router() received " + req.HTTPMethod + " request")
 
-	awsCfToken := os.Getenv("AWS_CF_TOKEN")
+	headersJSON, _ := json.Marshal(req.Headers)
+	log.Printf("router() received %s request, headers=%s", req.HTTPMethod, headersJSON)
 
-	if awsCfToken == "" {
-		return serverError(errors.New("Error reading environment variable"))
-	}
+	if !localMode {
+		awsCfToken := os.Getenv("AWS_CF_TOKEN")
 
-	providedCfToken := req.Headers["X-CF-Token"]
+		if awsCfToken == "" {
+			return serverError(errors.New("Error reading environment variable"))
+		}
 
-	if providedCfToken != awsCfToken {
-		return clientError(http.StatusUnauthorized)
+		providedCfToken := req.Headers["X-CF-Token"]
+
+		if providedCfToken != awsCfToken {
+			return clientError(http.StatusUnauthorized)
+		}
 	}
 
 	switch req.HTTPMethod {
 	case "GET":
 		return processGet(ctx, req)
-	case "POST":
-		return processPost(ctx, req)
-	case "DELETE":
-		return processDelete(ctx, req)
-	case "PUT":
-		return processPut(ctx, req)
+
 	case "OPTIONS":
 		return processOptions()
+
+	case "POST":
+		return handleAdminOnly(ctx, req, processPost)
+
+	case "DELETE":
+		return handleAdminOnly(ctx, req, processDelete)
+
+	case "PUT":
+		return handleAdminOnly(ctx, req, processPut)
+
 	default:
 		log.Println("router() error parsing HTTP method")
 		return clientError(http.StatusMethodNotAllowed)
