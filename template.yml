@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  CfToken:
+    Type: String
+    NoEcho: true
+    Description: Token for API auth (e.g. Cloudflare or custom); set via --parameter-overrides CfToken=xxx when deploying
+
+Resources:
+  MyrestoMenuitemsService:
+    Type: AWS::Serverless::Api
+    Description: "Serverless API for CRUD operations"
+    Properties:
+      Name: "myresto-menuitems-service"
+      StageName: Prod
+      Auth:
+      Cors:
+        AllowMethods: "'OPTIONS, POST, GET, PUT, DELETE'"
+        AllowHeaders: "'Content-Type, X-CF-Token'"
+        # AllowOrigin: "'http://localhost:5173'" 
+        AllowOrigin: "'https://d3knrnqllqxltd.cloudfront.net'" 
+
+      # Logging settings
+      MethodSettings:
+        - LoggingLevel: INFO
+          ResourcePath: "/*"
+          HttpMethod: "*"
+          MetricsEnabled: true
+          DataTraceEnabled: true
+
+  MyrestoMenuitemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 10
+      Handler: bootstrap
+      Runtime: provided.al2023
+      MemorySize: 512
+      Environment:
+        Variables:
+          AWS_CF_TOKEN: !Ref CfToken  # comes from --parameter-overrides
+      Policies:
+        - AWSLambdaExecute
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MyrestoMenuitemsTable
+      Events:
+        MenuitemsOptions:
+          Type: Api
+          Properties:
+            Path: /menuitems
+            Method: OPTIONS
+            RestApiId: !Ref MyrestoMenuitemsService
+        MenuitemsOptionsId:
+          Type: Api
+          Properties:
+            Path: /menuitems/{id}
+            Method: OPTIONS
+            RestApiId: !Ref MyrestoMenuitemsService
+        GetMenuitem:
+          Type: Api
+          Properties:
+            Path: /menuitems/{id}
+            Method: GET
+            RestApiId: !Ref MyrestoMenuitemsService
+            
+        GetMenuitems:
+          Type: Api
+          Properties:
+            Path: /menuitems
+            Method: GET
+            RestApiId: !Ref MyrestoMenuitemsService
+            
+        PutMenuitem:
+          Type: Api
+          Properties:
+            Path: /menuitems
+            Method: POST
+            RestApiId: !Ref MyrestoMenuitemsService
+            
+        DeleteMenuitem:
+          Type: Api
+          Properties:
+            Path: /menuitems/{id}
+            Method: DELETE
+            RestApiId: !Ref MyrestoMenuitemsService
+            
+        UpdateMenuitem:
+          Type: Api
+          Properties:
+            Path: /menuitems/{id}
+            Method: PUT
+            RestApiId: !Ref MyrestoMenuitemsService
+            
+    Metadata:
+      BuildMethod: makefile
+
+  MyrestoMenuitemsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MyrestoMenuitems
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
