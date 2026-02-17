@@ -2,14 +2,14 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
-  AWS_CF_TOKEN:
+  AwsCFToken:
     Type: String
     NoEcho: true
-    Description: Token for API auth (e.g. Cloudflare or custom); set via --parameter-overrides AWS_CF_TOKEN=xxx when deploying
-  ADMIN_KEY:
+    Description: Token for API auth (e.g. Cloudflare or custom); set via --parameter-overrides AwsCFToken=xxx when deploying
+  AdminKey:
     Type: String
     NoEcho: true
-    Description: Key for frontend admin access set via --parameter-overrides ADMIN_KEY=xxx when deploying
+    Description: Key for frontend admin access set via --parameter-overrides AdminKey=xxx when deploying
 
 Resources:
   MyrestoMenuitemsService:
@@ -43,8 +43,8 @@ Resources:
       Environment:
         Variables:
           # comes from --parameter-overrides
-          AWS_CF_TOKEN: !Ref AWS_CF_TOKEN  
-          ADMIN_KEY: !Ref ADMIN_KEY
+          AWS_CF_TOKEN: !Ref AwsCFToken  
+          ADMIN_KEY: !Ref AdminKey
       Policies:
         - AWSLambdaExecute
         - DynamoDBCrudPolicy:
