@@ -74,7 +74,15 @@ func handleAdminOnly(
 	req events.APIGatewayProxyRequest,
 	handler func(context.Context, events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error),
 ) (events.APIGatewayProxyResponse, error) {
-	if !isValidAdminKey(req.Headers["X-Admin-Key"]) {
+	var providedAdminKey string
+
+	if localMode {
+		providedAdminKey = req.Headers["X-Admin-Key"]
+	} else {
+		providedAdminKey = req.Headers["x-admin-key"]
+	}
+
+	if !isValidAdminKey(providedAdminKey) {
 		log.Println("handleAdminOnly() error: AdminKey mismatch")
 		return clientError(http.StatusUnauthorized)
 	}
